@@ -1,0 +1,615 @@
+/* ==========================================================================
+   Hacker News Dark
+   --------------------------------------------------------------------------
+   Every rule is gated behind html[data-hn-theme="dark"], which content.js
+   sets at document_start. In light mode the extension adds nothing, so
+   light stays byte-for-byte vanilla HN.
+
+   The gate also buys specificity: html[…] adds (0,1,1) on top of every
+   selector, which outranks HN's own news.css at equal class counts. That
+   means almost no !important — those are reserved for the handful of places
+   HN uses an inline style attribute.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Palette
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] {
+  color-scheme: dark;
+
+  --hn-canvas:      #0f1114;  /* page, outside the main table            */
+  --hn-surface:     #17191e;  /* #hnmain                                 */
+  --hn-header:      #1d2026;  /* top bar                                 */
+  --hn-elevated:    #21252c;  /* buttons, pills, code blocks             */
+  --hn-field:       #0c0e11;  /* inputs, textareas                       */
+
+  --hn-border:      #2c313a;
+  --hn-border-soft: #23272e;
+
+  --hn-text:        #e8eaee;  /* titles, primary                         */
+  --hn-text-2:      #9aa3af;  /* meta: points, age, nav                  */
+  --hn-text-3:      #6b7280;  /* rank, reply, deep background            */
+  --hn-comment:     #ccd2da;  /* comment body                            */
+  --hn-visited:     #79818d;  /* visited story titles                    */
+
+  --hn-accent:      #ff7a29;  /* brand orange, lifted for dark bg        */
+  --hn-accent-hi:   #ff9552;
+  --hn-link:        #8ab4ff;  /* inline links inside comment text        */
+
+  --hn-selection:   rgba(255, 122, 41, 0.26);
+}
+
+/* Pre-paint fallback. content.js normally sets data-hn-theme before the
+   first frame; if anything ever delays it, flash dark rather than white. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-hn-theme]),
+  html:not([data-hn-theme]) body {
+    background-color: #0f1114;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Canvas and shell
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"],
+html[data-hn-theme="dark"] body {
+  background-color: var(--hn-canvas);
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] body {
+  padding: 14px 0 28px;
+}
+
+html[data-hn-theme="dark"] #hnmain {
+  background-color: var(--hn-surface);
+  border: 1px solid var(--hn-border-soft);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.5);
+}
+
+html[data-hn-theme="dark"] td {
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] ::selection {
+  background: var(--hn-selection);
+  color: var(--hn-text);
+}
+
+html[data-hn-theme="dark"] hr {
+  border: 0;
+  border-top: 1px solid var(--hn-border);
+}
+
+/* --------------------------------------------------------------------------
+   3. Typography
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] body,
+html[data-hn-theme="dark"] td,
+html[data-hn-theme="dark"] .default,
+html[data-hn-theme="dark"] .title,
+html[data-hn-theme="dark"] .subtext,
+html[data-hn-theme="dark"] .comhead,
+html[data-hn-theme="dark"] .comment,
+html[data-hn-theme="dark"] .pagetop,
+html[data-hn-theme="dark"] .yclinks,
+html[data-hn-theme="dark"] input,
+html[data-hn-theme="dark"] select,
+html[data-hn-theme="dark"] button {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
+    system-ui, "Helvetica Neue", Arial, sans-serif;
+}
+
+html[data-hn-theme="dark"] body,
+html[data-hn-theme="dark"] td,
+html[data-hn-theme="dark"] input,
+html[data-hn-theme="dark"] select,
+html[data-hn-theme="dark"] button {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HN ships its own sizes for <=750px; leave those alone and only retune
+   the desktop scale, where the system stack renders smaller than Verdana. */
+@media (min-width: 751px) {
+  html[data-hn-theme="dark"] body,
+  html[data-hn-theme="dark"] td,
+  html[data-hn-theme="dark"] .default,
+  html[data-hn-theme="dark"] .pagetop {
+    font-size: 13.5px;
+  }
+
+  html[data-hn-theme="dark"] .title {
+    font-size: 14px;
+    line-height: 1.42;
+  }
+
+  html[data-hn-theme="dark"] .comment,
+  html[data-hn-theme="dark"] .commtext {
+    font-size: 13.5px;
+    line-height: 1.56;
+  }
+
+  html[data-hn-theme="dark"] .subtext,
+  html[data-hn-theme="dark"] .subtext td {
+    font-size: 11.5px;
+  }
+
+  html[data-hn-theme="dark"] .comhead {
+    font-size: 11.5px;
+  }
+
+  html[data-hn-theme="dark"] .yclinks {
+    font-size: 12px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Top bar
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] #hnmain > tbody > tr:first-child > td {
+  background-color: var(--hn-header);
+  border-radius: 9px 9px 0 0;
+  box-shadow: inset 0 -1px 0 0 var(--hn-border),
+              inset 0 -3px 0 -1px rgba(255, 122, 41, 0.55);
+}
+
+/* HN puts `border:1px white solid` inline on the logo. */
+html[data-hn-theme="dark"] #hnmain img[src*="y18"] {
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 4px;
+}
+
+html[data-hn-theme="dark"] .pagetop,
+html[data-hn-theme="dark"] .pagetop a:link,
+html[data-hn-theme="dark"] .pagetop a:visited {
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] .pagetop a:hover {
+  color: var(--hn-text);
+}
+
+html[data-hn-theme="dark"] .pagetop b.hnname a:link,
+html[data-hn-theme="dark"] .pagetop b.hnname a:visited {
+  color: var(--hn-text);
+  font-weight: 650;
+  letter-spacing: 0.1px;
+}
+
+html[data-hn-theme="dark"] .pagetop .topsel a:link,
+html[data-hn-theme="dark"] .pagetop .topsel a:visited {
+  color: var(--hn-accent);
+  font-weight: 600;
+}
+
+/* The "theme" link this extension inserts. */
+html[data-hn-theme="dark"] #hn-theme-toggle:link,
+html[data-hn-theme="dark"] #hn-theme-toggle:visited {
+  color: var(--hn-accent);
+}
+
+html[data-hn-theme="dark"] #hn-theme-toggle:hover {
+  color: var(--hn-accent-hi);
+}
+
+#hn-theme-toggle {
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   5. Links (base)
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] a:link {
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] a:visited {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] a:hover {
+  color: var(--hn-text);
+}
+
+/* HN sprinkles a few <font color> tags (the "help" link, some admin bits). */
+html[data-hn-theme="dark"] font[color] {
+  color: inherit !important;
+}
+
+/* Bold text is a heading on the chrome-less pages (login, forgot, submit),
+   so lift it out of the dim body color. */
+html[data-hn-theme="dark"] b:not(.hnname) {
+  color: var(--hn-text);
+}
+
+/* …but inside comment bodies, bold must keep inheriting so the c00–cdd
+   dimming ramp below still applies to it. Equal specificity, declared later. */
+html[data-hn-theme="dark"] .commtext b,
+html[data-hn-theme="dark"] .toptext b {
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   6. Story list
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] .title,
+html[data-hn-theme="dark"] .titleline a:link {
+  color: var(--hn-text);
+}
+
+html[data-hn-theme="dark"] .titleline a:visited {
+  color: var(--hn-visited);
+}
+
+html[data-hn-theme="dark"] .titleline a:hover {
+  color: var(--hn-accent-hi);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+html[data-hn-theme="dark"] .rank {
+  color: var(--hn-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-hn-theme="dark"] .sitebit,
+html[data-hn-theme="dark"] .sitebit a:link,
+html[data-hn-theme="dark"] .sitebit a:visited,
+html[data-hn-theme="dark"] .sitestr {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] .sitebit a:hover .sitestr,
+html[data-hn-theme="dark"] .sitebit a:hover {
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] .subtext,
+html[data-hn-theme="dark"] .subline,
+html[data-hn-theme="dark"] .subtext a:link,
+html[data-hn-theme="dark"] .subtext a:visited,
+html[data-hn-theme="dark"] .age,
+html[data-hn-theme="dark"] .age a:link,
+html[data-hn-theme="dark"] .age a:visited {
+  color: var(--hn-text-2);
+}
+
+html[data-hn-theme="dark"] .subtext a:hover,
+html[data-hn-theme="dark"] .age a:hover {
+  color: var(--hn-text);
+}
+
+html[data-hn-theme="dark"] .score {
+  color: var(--hn-text-2);
+  font-weight: 550;
+}
+
+html[data-hn-theme="dark"] .hnuser:link,
+html[data-hn-theme="dark"] .hnuser:visited {
+  color: #bcc4cf;
+}
+
+html[data-hn-theme="dark"] .hnuser:hover {
+  color: var(--hn-accent-hi);
+}
+
+/* A touch more air between stories than HN's 5px. */
+html[data-hn-theme="dark"] tr.spacer {
+  height: 9px !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Vote arrows
+   HN's triangle.svg is a dark glyph baked for a light background, so swap
+   in an inline one tinted for dark. The gradient layer keeps HN's own
+   stacking intact.
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] .votearrow {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 9.33 8.5H0.67z' fill='%236e7681'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px;
+}
+
+html[data-hn-theme="dark"] a:hover > .votearrow,
+html[data-hn-theme="dark"] .votearrow:hover {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 9.33 8.5H0.67z' fill='%23ff7a29'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   8. "More" link, as a pill
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] a.morelink:link,
+html[data-hn-theme="dark"] a.morelink:visited {
+  display: inline-block;
+  margin: 6px 0 2px;
+  padding: 7px 18px;
+  border: 1px solid var(--hn-border);
+  border-radius: 999px;
+  background-color: var(--hn-elevated);
+  color: var(--hn-text-2);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+html[data-hn-theme="dark"] a.morelink:hover {
+  border-color: rgba(255, 122, 41, 0.6);
+  background-color: #262b33;
+  color: var(--hn-accent-hi);
+}
+
+html[data-hn-theme="dark"] .hnmore,
+html[data-hn-theme="dark"] .hnmore a:link,
+html[data-hn-theme="dark"] .hnmore a:visited {
+  color: var(--hn-text-2);
+}
+
+/* --------------------------------------------------------------------------
+   9. Comments
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] .comment,
+html[data-hn-theme="dark"] .commtext {
+  color: var(--hn-comment);
+}
+
+html[data-hn-theme="dark"] .commtext p {
+  margin: 0.85em 0 0;
+}
+
+html[data-hn-theme="dark"] .comment a:link,
+html[data-hn-theme="dark"] .comment a:visited,
+html[data-hn-theme="dark"] .commtext a:link,
+html[data-hn-theme="dark"] .commtext a:visited {
+  color: var(--hn-link);
+  text-decoration: underline;
+  text-decoration-color: rgba(138, 180, 255, 0.4);
+  text-underline-offset: 2px;
+}
+
+html[data-hn-theme="dark"] .comment a:hover,
+html[data-hn-theme="dark"] .commtext a:hover {
+  color: #a9c8ff;
+  text-decoration-color: currentColor;
+}
+
+html[data-hn-theme="dark"] .comhead,
+html[data-hn-theme="dark"] .comhead a:link,
+html[data-hn-theme="dark"] .comhead a:visited,
+html[data-hn-theme="dark"] .navs,
+html[data-hn-theme="dark"] .navs a:link,
+html[data-hn-theme="dark"] .navs a:visited,
+html[data-hn-theme="dark"] .onstory,
+html[data-hn-theme="dark"] .onstory a:link,
+html[data-hn-theme="dark"] .onstory a:visited {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] .comhead a:hover,
+html[data-hn-theme="dark"] .navs a:hover,
+html[data-hn-theme="dark"] .onstory a:hover {
+  color: var(--hn-text-2);
+}
+
+/* `a.togg` rather than `.togg` so this outranks the `.navs a` rules above. */
+html[data-hn-theme="dark"] a.togg:link,
+html[data-hn-theme="dark"] a.togg:visited {
+  color: var(--hn-text-2);
+  font-weight: 600;
+}
+
+html[data-hn-theme="dark"] a.togg:hover {
+  color: var(--hn-accent);
+}
+
+html[data-hn-theme="dark"] .reply,
+html[data-hn-theme="dark"] .reply a:link,
+html[data-hn-theme="dark"] .reply a:visited {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] .reply a:hover {
+  color: var(--hn-accent);
+}
+
+/* Vertical guide on the indent column so deep threads stay readable. */
+html[data-hn-theme="dark"] .comment-tree td.ind[indent]:not([indent="0"]) {
+  box-shadow: inset -1px 0 0 0 var(--hn-border-soft);
+}
+
+/* Downweighted / flagged comments: HN's c00…cdd ramp goes dark-to-light for
+   a white page. Re-map it light-to-dark so the ordering still reads. */
+html[data-hn-theme="dark"] .c00,
+html[data-hn-theme="dark"] .c00 a:link { color: #ccd2da; }
+html[data-hn-theme="dark"] .c5a,
+html[data-hn-theme="dark"] .c5a a:link,
+html[data-hn-theme="dark"] .c5a a:visited { color: #a7aeb8; }
+html[data-hn-theme="dark"] .c73,
+html[data-hn-theme="dark"] .c73 a:link,
+html[data-hn-theme="dark"] .c73 a:visited { color: #949ba5; }
+html[data-hn-theme="dark"] .c82,
+html[data-hn-theme="dark"] .c82 a:link,
+html[data-hn-theme="dark"] .c82 a:visited { color: #878e98; }
+html[data-hn-theme="dark"] .c88,
+html[data-hn-theme="dark"] .c88 a:link,
+html[data-hn-theme="dark"] .c88 a:visited { color: #7f858f; }
+html[data-hn-theme="dark"] .c9c,
+html[data-hn-theme="dark"] .c9c a:link,
+html[data-hn-theme="dark"] .c9c a:visited { color: #737a83; }
+html[data-hn-theme="dark"] .cae,
+html[data-hn-theme="dark"] .cae a:link,
+html[data-hn-theme="dark"] .cae a:visited { color: #686e77; }
+html[data-hn-theme="dark"] .cbe,
+html[data-hn-theme="dark"] .cbe a:link,
+html[data-hn-theme="dark"] .cbe a:visited { color: #5e646c; }
+html[data-hn-theme="dark"] .cce,
+html[data-hn-theme="dark"] .cce a:link,
+html[data-hn-theme="dark"] .cce a:visited { color: #555b62; }
+html[data-hn-theme="dark"] .cdd,
+html[data-hn-theme="dark"] .cdd a:link,
+html[data-hn-theme="dark"] .cdd a:visited { color: #4c5158; }
+
+/* --------------------------------------------------------------------------
+   10. Code and quoted text
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] .commtext pre,
+html[data-hn-theme="dark"] .toptext pre {
+  background-color: var(--hn-field);
+  border: 1px solid var(--hn-border-soft);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0.9em 0 0.2em;
+  color: #dbe0e7;
+}
+
+html[data-hn-theme="dark"] .commtext code,
+html[data-hn-theme="dark"] .toptext code {
+  color: #dbe0e7;
+  font-size: 0.94em;
+}
+
+html[data-hn-theme="dark"] .toptext {
+  color: var(--hn-comment);
+}
+
+/* --------------------------------------------------------------------------
+   11. Forms
+   -------------------------------------------------------------------------- */
+
+html[data-hn-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+html[data-hn-theme="dark"] textarea,
+html[data-hn-theme="dark"] select {
+  background-color: var(--hn-field);
+  color: var(--hn-text);
+  border: 1px solid var(--hn-border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  outline: none;
+}
+
+html[data-hn-theme="dark"] textarea {
+  line-height: 1.5;
+  padding: 8px 10px;
+}
+
+html[data-hn-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):focus,
+html[data-hn-theme="dark"] textarea:focus,
+html[data-hn-theme="dark"] select:focus {
+  border-color: rgba(255, 122, 41, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 122, 41, 0.14);
+}
+
+html[data-hn-theme="dark"] ::placeholder {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] input[type="submit"],
+html[data-hn-theme="dark"] button {
+  background-color: var(--hn-accent);
+  color: #1a0f05;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+html[data-hn-theme="dark"] input[type="submit"]:hover,
+html[data-hn-theme="dark"] button:hover {
+  background-color: var(--hn-accent-hi);
+}
+
+html[data-hn-theme="dark"] input[type="submit"]:active,
+html[data-hn-theme="dark"] button:active {
+  background-color: #e96a1c;
+}
+
+html[data-hn-theme="dark"] input[type="checkbox"],
+html[data-hn-theme="dark"] input[type="radio"] {
+  accent-color: var(--hn-accent);
+}
+
+/* --------------------------------------------------------------------------
+   12. Footer
+   -------------------------------------------------------------------------- */
+
+/* The rule above the footer links is a 2px empty bgcolor cell. Matching on
+   :empty rather than on #ff6600 keeps it working for accounts that set a
+   custom `topcolor` in their profile — HN paints this cell in that color too. */
+html[data-hn-theme="dark"] #hnmain td[bgcolor]:empty {
+  background-color: rgba(255, 122, 41, 0.38);
+}
+
+html[data-hn-theme="dark"] .yclinks,
+html[data-hn-theme="dark"] .yclinks a:link,
+html[data-hn-theme="dark"] .yclinks a:visited {
+  color: var(--hn-text-3);
+}
+
+html[data-hn-theme="dark"] .yclinks a:hover {
+  color: var(--hn-text-2);
+}
+
+/* --------------------------------------------------------------------------
+   13. Full-bleed on narrow screens
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 750px) {
+  html[data-hn-theme="dark"] body {
+    padding: 0;
+  }
+
+  html[data-hn-theme="dark"] #hnmain {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  html[data-hn-theme="dark"] #hnmain > tbody > tr:first-child > td {
+    border-radius: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   14. Toggle animation
+   content.js adds .hn-anim on click only, so first paint is never animated.
+   -------------------------------------------------------------------------- */
+
+html.hn-anim body,
+html.hn-anim #hnmain,
+html.hn-anim td,
+html.hn-anim a,
+html.hn-anim span,
+html.hn-anim div,
+html.hn-anim input,
+html.hn-anim textarea,
+html.hn-anim select {
+  transition: background-color 0.18s ease, color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.hn-anim body,
+  html.hn-anim #hnmain,
+  html.hn-anim td,
+  html.hn-anim a,
+  html.hn-anim span,
+  html.hn-anim div,
+  html.hn-anim input,
+  html.hn-anim textarea,
+  html.hn-anim select {
+    transition: none;
+  }
+}

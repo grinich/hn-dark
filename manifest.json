@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Hacker News Dark",
+  "version": "1.0.0",
+  "description": "A refined dark theme for Hacker News. Follows your system appearance, with a \"theme\" link in the top bar to flip it.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["*://news.ycombinator.com/*"],
+      "css": ["hn-dark.css"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

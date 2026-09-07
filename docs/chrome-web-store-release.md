@@ -49,7 +49,7 @@ it. Skip to [Every time after that](#every-time-after-that).
 ## One time: let CI publish — done
 
 Configured on 2026-09-07. The client is `hn-dark-ci`, a Desktop-app OAuth
-client in the `xchat-releases` project, authorized by the Google account that
+client in the `chrome-extension-releases` project, authorized by the account that
 owns the listing — verified against the live API before anything was stored.
 `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET` and `CWS_REFRESH_TOKEN` are set on the
 repo, alongside the `CWS_EXTENSION_ID` variable. Releases publish themselves;
@@ -64,10 +64,17 @@ Claude in Chrome, which drives the real browser on this machine, so both
 conditions hold. Three steps, one of them a click.
 
 **1. Make a Desktop-app OAuth client.** Reuse the existing
-[`xchat-releases`](https://console.cloud.google.com/) project — it already has
-the **Chrome Web Store API** enabled and its consent screen set to *In
-production*, which are the two slow parts. *Credentials → Create credentials →
-OAuth client ID → Desktop app*, named `hn-dark-ci`.
+**chrome-extension-releases** project — it already has the **Chrome Web Store
+API** enabled and its consent screen set to *In production*, which are the two
+slow parts. *Credentials → Create credentials → OAuth client ID → Desktop app*,
+named `hn-dark-ci`.
+
+Its project **ID** is still `xchat-releases`, which is what appears in console
+URLs and in the `project_id` field of any downloaded client JSON. A Google
+Cloud project ID is fixed at creation and can never be changed — only the
+display name can — so the two will disagree forever. Getting the ID to match
+would mean a new project, re-enabling the API, re-doing the *In production*
+toggle, and re-creating and re-authorizing every client in it.
 
 A client of its own, rather than reusing `inflow-ci`, for the reason inflow's
 own runbook gives for keeping `inflow-ci` separate from `xchat-ci`: revoking

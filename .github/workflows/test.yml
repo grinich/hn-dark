@@ -1,0 +1,23 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Google Chrome ships on the ubuntu-latest image, and the fixtures are
+      # vendored, so there is nothing to install and nothing to fetch.
+      - name: Colors
+        run: ./scripts/smoke-test.sh
+
+      # Catches a manifest that would be rejected at upload — an over-long
+      # description, a stray `key`, a missing icon size.
+      - name: Package
+        run: ./scripts/build-zip.sh

@@ -1,0 +1,191 @@
+name: Release
+
+# Cut a release by pushing a version tag:
+#
+#   ./scripts/bump-version.sh 0.0.2   # edits manifest.json, commits, tags
+#   git push --follow-tags
+#
+# Add the matching section to CHANGELOG.md first — it becomes the release notes.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # needed to create the GitHub Release
+
+jobs:
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Gate the release on the colors still being right. A theme layered over
+      # someone else's stylesheet fails silently, so this is the only thing
+      # standing between a bad cascade and the store.
+      - name: Smoke test
+        run: ./scripts/smoke-test.sh
+
+      # There is no build and nothing to install: the repo is the extension.
+      # The script validates the manifest against the store's limits, so a bad
+      # description or a stray `key` fails here rather than at upload.
+      - name: Package
+        run: ./scripts/build-zip.sh
+
+      # The tag is the source of truth for the version; a tag that disagrees
+      # with the manifest would ship the wrong number to the store.
+      - name: Check the tag matches the manifest
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(python3 -c 'import json; print(json.load(open("manifest.json"))["version"])')
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest version $MANIFEST_VERSION."
+            exit 1
+          fi
+
+      - name: Extract the release notes
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          # The CHANGELOG section for this version, without its own heading.
+          # Unwrapped, because GitHub renders release notes with hard line
+          # breaks on and the markdown's column wrapping would show through.
+          python3 - "$VERSION" > release-notes.md <<'PY'
+          import re, sys
+
+          version = sys.argv[1]
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          match = re.search(
+              rf"^## {re.escape(version)}\b.*?\n(.*?)(?=^## |\Z)",
+              text,
+              re.S | re.M,
+          )
+          body = match.group(1).strip() if match else ""
+
+          # Unwrap: join a paragraph's or a list item's continuation lines back
+          # onto one line. A bullet keeps buffering, so its wrapped remainder
+          # lands in the bullet rather than under it.
+          out, buffer = [], []
+
+          def flush():
+              if buffer:
+                  out.append(" ".join(buffer))
+                  buffer.clear()
+
+          for line in body.splitlines():
+              stripped = line.strip()
+              if not stripped:
+                  flush()
+                  out.append("")
+              elif stripped.startswith(("#", "|")):
+                  flush()
+                  out.append(stripped)
+              elif stripped.startswith(("-", "*", ">")):
+                  flush()
+                  buffer.append(stripped)
+              else:
+                  buffer.append(stripped)
+          flush()
+          print("\n".join(out))
+          PY
+          cat release-notes.md
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: release-notes.md
+          generate_release_notes: true # appends the auto commit list
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: dist/*.zip
+
+  # Publishes the same tag to the Chrome Web Store. A separate job so a
+  # store-side failure (expired token, review rejection) leaves the GitHub
+  # Release intact rather than failing the run after it already exists.
+  #
+  # The listing itself has to be created by hand once: the API can upload and
+  # publish a package, but it cannot create an item, set the description, or
+  # upload screenshots. See docs/chrome-web-store-release.md.
+  #
+  # Needs the repository variable CWS_EXTENSION_ID and three secrets —
+  # CWS_CLIENT_ID · CWS_CLIENT_SECRET · CWS_REFRESH_TOKEN — all set by
+  # ./scripts/setup-cws-secrets.sh. Until they exist the job SKIPS rather than
+  # fails, so tagging works before the listing does.
+  chrome-web-store:
+    name: Publish to Chrome Web Store
+    needs: release
+    # Betas (any hyphenated tag) never go to the store.
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    env:
+      # Public — it is the ID in the store listing URL.
+      EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Package
+        run: ./scripts/build-zip.sh
+
+      - name: Upload and publish
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${EXTENSION_ID:-}" ] || [ -z "${CWS_CLIENT_ID:-}" ] ||
+             [ -z "${CWS_CLIENT_SECRET:-}" ] || [ -z "${CWS_REFRESH_TOKEN:-}" ]; then
+            echo "Chrome Web Store credentials are not configured — skipping."
+            echo "Run ./scripts/setup-cws-secrets.sh once the listing exists." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          ZIP=$(ls dist/hn-dark-*.zip)
+          echo "Publishing $ZIP to $EXTENSION_ID"
+
+          # Refresh tokens do not expire on their own, but they are revoked if
+          # the OAuth client is deleted or consent is withdrawn — fail loudly.
+          TOKEN=$(curl -sS -X POST https://oauth2.googleapis.com/token \
+            -d client_id="$CWS_CLIENT_ID" \
+            -d client_secret="$CWS_CLIENT_SECRET" \
+            -d refresh_token="$CWS_REFRESH_TOKEN" \
+            -d grant_type=refresh_token | jq -r '.access_token // empty')
+
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Could not mint an access token. Re-run ./scripts/setup-cws-secrets.sh for a fresh CWS_REFRESH_TOKEN."
+            exit 1
+          fi
+
+          UPLOAD=$(curl -sS -X PUT \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -T "$ZIP" \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$EXTENSION_ID")
+          echo "Upload response: $UPLOAD"
+
+          # A failed upload still returns HTTP 200 — the verdict is in the body.
+          if [ "$(echo "$UPLOAD" | jq -r '.uploadState // empty')" != "SUCCESS" ]; then
+            echo "::error::Upload rejected: $(echo "$UPLOAD" | jq -r '[.itemError[]?.error_detail] | join("; ")')"
+            exit 1
+          fi
+
+          PUBLISH=$(curl -sS -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0" \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/$EXTENSION_ID/publish")
+          echo "Publish response: $PUBLISH"
+
+          STATUS=$(echo "$PUBLISH" | jq -r '(.status // []) | join(",")')
+          case "$STATUS" in
+            *OK*|*ITEM_PENDING_REVIEW*|*PUBLISHED_WITH_FRICTION_WARNING*)
+              echo "Submitted for publication: $STATUS"
+              echo "### Chrome Web Store: \`$STATUS\`" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "::error::Publish failed: $(echo "$PUBLISH" | jq -r '(.statusDetail // []) | join("; ")')"
+              exit 1
+              ;;
+          esac

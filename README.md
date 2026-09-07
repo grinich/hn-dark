@@ -5,6 +5,11 @@ A dark theme for news.ycombinator.com that follows your system appearance, with 
 
 ## Install
 
+From the Chrome Web Store — *listing pending review; the link lands here once
+it is live.*
+
+Or run it from source:
+
 1. Open `chrome://extensions`
 2. Turn on **Developer mode** (top right)
 3. Click **Load unpacked** and select this folder
@@ -60,6 +65,55 @@ byte-for-byte vanilla HN.
 | `hn-dark.css` | The theme. Five palette tokens at the top, then sections per HN surface |
 | `content.js` | Resolves system + inverted state into `data-hn-theme`, inserts the `theme` link |
 | `icons/` | Generated PNGs (split dark/orange square with a Y) |
+| `test/` | Saved HN pages, plus the assertions run against them |
+| `scripts/` | Package, test, screenshot, version, and Chrome Web Store setup |
+| `store/` | The listing copy and its graphic assets |
+| `docs/chrome-web-store-release.md` | How a release reaches the store |
+
+Those four are the whole extension: `manifest.json`, `hn-dark.css`,
+`content.js`, `icons/`. Everything else is repo furniture and never ships —
+`scripts/build-zip.sh` puts only those four in the package.
+
+## Development
+
+There is no build step and nothing to install. Edit the CSS, reload the
+extension, look at Hacker News.
+
+```sh
+./scripts/smoke-test.sh          # assert the colors against saved HN pages
+./scripts/build-zip.sh           # dist/hn-dark-<version>.zip, as the store gets it
+./scripts/build-screenshots.sh   # regenerate store/screenshots/
+```
+
+The smoke test is the one worth knowing about. A theme layered over someone
+else's stylesheet fails by cascade, not by exception: a plausible-looking edit
+leaves text the same color as its background, and the diff looks fine. So
+`test/fixtures/` holds real saved pages — front page, comment thread, a poll,
+a `yc.css` doc page — with HN's own `news.css` and `yc.css` vendored beside
+them, and `test/assertions.js` checks the computed colors that come out. Every
+assertion in it is a shape that has actually broken.
+
+It needs Chrome and `python3`, and nothing else. Note that headless Chrome no
+longer loads unpacked extensions, so the test injects `content.js` the way the
+manifest does rather than through the extension machinery.
+
+## Releasing
+
+```sh
+# Write the CHANGELOG section for the new version first, then:
+./scripts/bump-version.sh 0.0.2
+git push --follow-tags
+```
+
+The tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
+which packages the extension, cuts a GitHub Release, and publishes the same zip
+to the Chrome Web Store. The first submission has to be made by hand — see
+[`docs/chrome-web-store-release.md`](docs/chrome-web-store-release.md).
+
+## Privacy
+
+No servers, no analytics, no network requests. One boolean is the only thing
+stored. See [`PRIVACY.md`](PRIVACY.md).
 
 ## Implementation notes
 

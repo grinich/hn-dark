@@ -1,43 +1,43 @@
 /* ==========================================================================
    Hacker News Dark
    --------------------------------------------------------------------------
+   Colors only. HN's layout is left exactly as news.css ships it — same
+   Verdana, same 10pt/9pt/7pt scale, same 5px spacers, same table widths,
+   same orange top bar, same square corners, no shadows, no added padding.
+   Every declaration below sets a background-color or a color, and nothing
+   else, so the page you get is vanilla HN with the grayscale flipped.
+
    Every rule is gated behind html[data-hn-theme="dark"], which content.js
    sets at document_start. In light mode the extension adds nothing, so
    light stays byte-for-byte vanilla HN.
 
    The gate also buys specificity: html[…] adds (0,1,1) on top of every
    selector, which outranks HN's own news.css at equal class counts. That
-   means almost no !important — those are reserved for the handful of places
-   HN uses an inline style attribute.
+   is why section 4 exists — the base link color below outranks news.css's
+   own one-class link rules, so those have to be restated rather than left
+   to cascade.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. Palette
+
+   HN's page is three grays: #ffffff behind the table, #f6f6ef inside it,
+   #000000 for links and comment text, #828282 for everything secondary.
+   The first three are inverted around the page background. #828282 is not:
+   it sits in the middle of the ramp and reads on either ground (4.5:1 here
+   against #1a1a1a, better than the 3:1 it manages on HN's cream), so
+   keeping the literal value keeps the metadata exactly where HN puts it.
    -------------------------------------------------------------------------- */
 
 html[data-hn-theme="dark"] {
   color-scheme: dark;
 
-  --hn-canvas:      #0f1114;  /* page, outside the main table            */
-  --hn-surface:     #17191e;  /* #hnmain                                 */
-  --hn-header:      #1d2026;  /* top bar                                 */
-  --hn-elevated:    #21252c;  /* buttons, pills, code blocks             */
-  --hn-field:       #0c0e11;  /* inputs, textareas                       */
+  --hn-canvas:  #121212;  /* body, outside the table  — HN's #ffffff */
+  --hn-surface: #1a1a1a;  /* #hnmain                  — HN's #f6f6ef */
+  --hn-field:   #101010;  /* inputs, textareas        — HN's #ffffff */
 
-  --hn-border:      #2c313a;
-  --hn-border-soft: #23272e;
-
-  --hn-text:        #e8eaee;  /* titles, primary                         */
-  --hn-text-2:      #9aa3af;  /* meta: points, age, nav                  */
-  --hn-text-3:      #6b7280;  /* rank, reply, deep background            */
-  --hn-comment:     #ccd2da;  /* comment body                            */
-  --hn-visited:     #79818d;  /* visited story titles                    */
-
-  --hn-accent:      #ff7a29;  /* brand orange, lifted for dark bg        */
-  --hn-accent-hi:   #ff9552;
-  --hn-link:        #8ab4ff;  /* inline links inside comment text        */
-
-  --hn-selection:   rgba(255, 122, 41, 0.26);
+  --hn-fg:      #e0e0e0;  /* everything HN paints     — HN's #000000 */
+  --hn-fg-dim:  #828282;  /* metadata, visited links  — HN's #828282 */
 }
 
 /* Pre-paint fallback. content.js normally sets data-hn-theme before the
@@ -45,546 +45,205 @@ html[data-hn-theme="dark"] {
 @media (prefers-color-scheme: dark) {
   html:not([data-hn-theme]),
   html:not([data-hn-theme]) body {
-    background-color: #0f1114;
+    background-color: #121212;
   }
 }
 
 /* --------------------------------------------------------------------------
-   2. Canvas and shell
+   2. Canvas
+
+   #hnmain carries bgcolor="#f6f6ef" as a presentational attribute, which
+   loses to any stylesheet, so no !important is needed.
    -------------------------------------------------------------------------- */
 
 html[data-hn-theme="dark"],
 html[data-hn-theme="dark"] body {
   background-color: var(--hn-canvas);
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] body {
-  padding: 14px 0 28px;
 }
 
 html[data-hn-theme="dark"] #hnmain {
   background-color: var(--hn-surface);
-  border: 1px solid var(--hn-border-soft);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.5);
-}
-
-html[data-hn-theme="dark"] td {
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] ::selection {
-  background: var(--hn-selection);
-  color: var(--hn-text);
-}
-
-html[data-hn-theme="dark"] hr {
-  border: 0;
-  border-top: 1px solid var(--hn-border);
 }
 
 /* --------------------------------------------------------------------------
-   3. Typography
+   3. Links and text
+
+   news.css: a:link #000000, a:visited #828282. Body and td stay #828282 in
+   both themes, so only the black end of the ramp moves.
    -------------------------------------------------------------------------- */
 
-html[data-hn-theme="dark"] body,
-html[data-hn-theme="dark"] td,
-html[data-hn-theme="dark"] .default,
-html[data-hn-theme="dark"] .title,
-html[data-hn-theme="dark"] .subtext,
-html[data-hn-theme="dark"] .comhead,
-html[data-hn-theme="dark"] .comment,
-html[data-hn-theme="dark"] .pagetop,
-html[data-hn-theme="dark"] .yclinks,
-html[data-hn-theme="dark"] input,
-html[data-hn-theme="dark"] select,
-html[data-hn-theme="dark"] button {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
-    system-ui, "Helvetica Neue", Arial, sans-serif;
+html[data-hn-theme="dark"] a:link {
+  color: var(--hn-fg);
 }
 
-html[data-hn-theme="dark"] body,
-html[data-hn-theme="dark"] td,
-html[data-hn-theme="dark"] input,
-html[data-hn-theme="dark"] select,
-html[data-hn-theme="dark"] button {
-  -webkit-font-smoothing: antialiased;
+html[data-hn-theme="dark"] a:visited {
+  color: var(--hn-fg-dim);
 }
 
-/* HN ships its own sizes for <=750px; leave those alone and only retune
-   the desktop scale, where the system stack renders smaller than Verdana. */
-@media (min-width: 751px) {
-  html[data-hn-theme="dark"] body,
-  html[data-hn-theme="dark"] td,
-  html[data-hn-theme="dark"] .default,
-  html[data-hn-theme="dark"] .pagetop {
-    font-size: 13.5px;
-  }
+/* .admin is the one place news.css sets #000000 on a block of text. */
+html[data-hn-theme="dark"] .admin,
+html[data-hn-theme="dark"] .admin td {
+  color: var(--hn-fg);
+}
 
-  html[data-hn-theme="dark"] .title {
-    font-size: 14px;
-    line-height: 1.42;
-  }
-
-  html[data-hn-theme="dark"] .comment,
-  html[data-hn-theme="dark"] .commtext {
-    font-size: 13.5px;
-    line-height: 1.56;
-  }
-
-  html[data-hn-theme="dark"] .subtext,
-  html[data-hn-theme="dark"] .subtext td {
-    font-size: 11.5px;
-  }
-
-  html[data-hn-theme="dark"] .comhead {
-    font-size: 11.5px;
-  }
-
-  html[data-hn-theme="dark"] .yclinks {
-    font-size: 12px;
-  }
+/* Poll options are <font color="#000000">. A color attribute is a
+   presentational hint on the font element itself, so news.css's
+   td { color:#828282 } never reaches it and the text really is black —
+   invisible here. HN's only other <font color> is #AFAFAF, a deliberate
+   downweight that reads on this ground as it does on HN's, so the black
+   is remapped on its own rather than with a blanket font[color] rule. */
+html[data-hn-theme="dark"] font[color="#000000" i],
+html[data-hn-theme="dark"] font[color="#000" i],
+html[data-hn-theme="dark"] font[color="black" i] {
+  color: var(--hn-fg);
 }
 
 /* --------------------------------------------------------------------------
-   4. Top bar
+   4. Restating news.css's own grays
+
+   These are all `.class a:link` — (0,2,1) — while the gated base rule above
+   is (0,2,2), so it would otherwise repaint HN's metadata as primary text.
+   Same values news.css uses; this section changes nothing visually, it just
+   puts the cascade back the way HN had it.
    -------------------------------------------------------------------------- */
 
-html[data-hn-theme="dark"] #hnmain > tbody > tr:first-child > td {
-  background-color: var(--hn-header);
-  border-radius: 9px 9px 0 0;
-  box-shadow: inset 0 -1px 0 0 var(--hn-border),
-              inset 0 -3px 0 -1px rgba(255, 122, 41, 0.55);
+html[data-hn-theme="dark"] .subtext a:link,
+html[data-hn-theme="dark"] .subtext a:visited,
+html[data-hn-theme="dark"] .comhead a:link,
+html[data-hn-theme="dark"] .comhead a:visited,
+html[data-hn-theme="dark"] .hnmore a:link,
+html[data-hn-theme="dark"] .hnmore a:visited {
+  color: var(--hn-fg-dim);
 }
 
-/* HN puts `border:1px white solid` inline on the logo. */
-html[data-hn-theme="dark"] #hnmain img[src*="y18"] {
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 4px;
-}
+/* --------------------------------------------------------------------------
+   5. Top bar
 
-html[data-hn-theme="dark"] .pagetop,
+   Left alone on purpose: the bar keeps HN's #ff6600 (or your profile's
+   topcolor, since nothing here overrides the bgcolor attribute), the logo
+   keeps its inline white border, and the nav keeps black-on-orange. Only
+   the base link color from section 3 has to be undone.
+
+   If the orange reads too hot against a dark page, the one thing to change
+   is the bar itself:
+
+     html[data-hn-theme="dark"] #hnmain > tbody > tr:first-child > td,
+     html[data-hn-theme="dark"] #hnmain td[bgcolor]:empty {
+       background-color: #cc5200;
+     }
+
+   ...matching the footer rule, which HN paints in the same color.
+   -------------------------------------------------------------------------- */
+
 html[data-hn-theme="dark"] .pagetop a:link,
 html[data-hn-theme="dark"] .pagetop a:visited {
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] .pagetop a:hover {
-  color: var(--hn-text);
-}
-
-html[data-hn-theme="dark"] .pagetop b.hnname a:link,
-html[data-hn-theme="dark"] .pagetop b.hnname a:visited {
-  color: var(--hn-text);
-  font-weight: 650;
-  letter-spacing: 0.1px;
+  color: #000000;
 }
 
 html[data-hn-theme="dark"] .pagetop .topsel a:link,
 html[data-hn-theme="dark"] .pagetop .topsel a:visited {
-  color: var(--hn-accent);
-  font-weight: 600;
+  color: #ffffff;
 }
 
-/* The "theme" link this extension inserts. */
-html[data-hn-theme="dark"] #hn-theme-toggle:link,
-html[data-hn-theme="dark"] #hn-theme-toggle:visited {
-  color: var(--hn-accent);
-}
-
-html[data-hn-theme="dark"] #hn-theme-toggle:hover {
-  color: var(--hn-accent-hi);
-}
-
+/* The "theme" link this extension inserts sits in .pagetop and inherits the
+   nav's color from the rule above; it only needs the cursor. */
 #hn-theme-toggle {
   cursor: pointer;
 }
 
 /* --------------------------------------------------------------------------
-   5. Links (base)
+   6. Comment text and the downweight ramp
+
+   Comment bodies get their color from the c00–cdd classes, not from
+   .commtext, so this ramp is the comment text color. news.css runs it
+   #000000 -> #dddddd, dark-to-light, so flagged comments fade toward a
+   white page. Inverted here so it fades toward this one instead, ending
+   just above the background exactly as HN's ends just below its own.
    -------------------------------------------------------------------------- */
 
-html[data-hn-theme="dark"] a:link {
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] a:visited {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] a:hover {
-  color: var(--hn-text);
-}
-
-/* HN sprinkles a few <font color> tags (the "help" link, some admin bits). */
-html[data-hn-theme="dark"] font[color] {
-  color: inherit !important;
-}
-
-/* Bold text is a heading on the chrome-less pages (login, forgot, submit),
-   so lift it out of the dim body color. */
-html[data-hn-theme="dark"] b:not(.hnname) {
-  color: var(--hn-text);
-}
-
-/* …but inside comment bodies, bold must keep inheriting so the c00–cdd
-   dimming ramp below still applies to it. Equal specificity, declared later. */
-html[data-hn-theme="dark"] .commtext b,
-html[data-hn-theme="dark"] .toptext b {
-  color: inherit;
-}
-
-/* --------------------------------------------------------------------------
-   6. Story list
-   -------------------------------------------------------------------------- */
-
-html[data-hn-theme="dark"] .title,
-html[data-hn-theme="dark"] .titleline a:link {
-  color: var(--hn-text);
-}
-
-html[data-hn-theme="dark"] .titleline a:visited {
-  color: var(--hn-visited);
-}
-
-html[data-hn-theme="dark"] .titleline a:hover {
-  color: var(--hn-accent-hi);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-html[data-hn-theme="dark"] .rank {
-  color: var(--hn-text-3);
-  font-variant-numeric: tabular-nums;
-}
-
-html[data-hn-theme="dark"] .sitebit,
-html[data-hn-theme="dark"] .sitebit a:link,
-html[data-hn-theme="dark"] .sitebit a:visited,
-html[data-hn-theme="dark"] .sitestr {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] .sitebit a:hover .sitestr,
-html[data-hn-theme="dark"] .sitebit a:hover {
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] .subtext,
-html[data-hn-theme="dark"] .subline,
-html[data-hn-theme="dark"] .subtext a:link,
-html[data-hn-theme="dark"] .subtext a:visited,
-html[data-hn-theme="dark"] .age,
-html[data-hn-theme="dark"] .age a:link,
-html[data-hn-theme="dark"] .age a:visited {
-  color: var(--hn-text-2);
-}
-
-html[data-hn-theme="dark"] .subtext a:hover,
-html[data-hn-theme="dark"] .age a:hover {
-  color: var(--hn-text);
-}
-
-html[data-hn-theme="dark"] .score {
-  color: var(--hn-text-2);
-  font-weight: 550;
-}
-
-html[data-hn-theme="dark"] .hnuser:link,
-html[data-hn-theme="dark"] .hnuser:visited {
-  color: #bcc4cf;
-}
-
-html[data-hn-theme="dark"] .hnuser:hover {
-  color: var(--hn-accent-hi);
-}
-
-/* A touch more air between stories than HN's 5px. */
-html[data-hn-theme="dark"] tr.spacer {
-  height: 9px !important;
-}
-
-/* --------------------------------------------------------------------------
-   7. Vote arrows
-   HN's triangle.svg is a dark glyph baked for a light background, so swap
-   in an inline one tinted for dark. The gradient layer keeps HN's own
-   stacking intact.
-   -------------------------------------------------------------------------- */
-
-html[data-hn-theme="dark"] .votearrow {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 9.33 8.5H0.67z' fill='%236e7681'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 10px;
-}
-
-html[data-hn-theme="dark"] a:hover > .votearrow,
-html[data-hn-theme="dark"] .votearrow:hover {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M5 1 9.33 8.5H0.67z' fill='%23ff7a29'/%3E%3C/svg%3E");
-}
-
-/* --------------------------------------------------------------------------
-   8. "More" link, as a pill
-   -------------------------------------------------------------------------- */
-
-html[data-hn-theme="dark"] a.morelink:link,
-html[data-hn-theme="dark"] a.morelink:visited {
-  display: inline-block;
-  margin: 6px 0 2px;
-  padding: 7px 18px;
-  border: 1px solid var(--hn-border);
-  border-radius: 999px;
-  background-color: var(--hn-elevated);
-  color: var(--hn-text-2);
-  font-size: 13px;
-  font-weight: 550;
-}
-
-html[data-hn-theme="dark"] a.morelink:hover {
-  border-color: rgba(255, 122, 41, 0.6);
-  background-color: #262b33;
-  color: var(--hn-accent-hi);
-}
-
-html[data-hn-theme="dark"] .hnmore,
-html[data-hn-theme="dark"] .hnmore a:link,
-html[data-hn-theme="dark"] .hnmore a:visited {
-  color: var(--hn-text-2);
-}
-
-/* --------------------------------------------------------------------------
-   9. Comments
-   -------------------------------------------------------------------------- */
-
-html[data-hn-theme="dark"] .comment,
-html[data-hn-theme="dark"] .commtext {
-  color: var(--hn-comment);
-}
-
-html[data-hn-theme="dark"] .commtext p {
-  margin: 0.85em 0 0;
-}
-
-html[data-hn-theme="dark"] .comment a:link,
-html[data-hn-theme="dark"] .comment a:visited,
-html[data-hn-theme="dark"] .commtext a:link,
-html[data-hn-theme="dark"] .commtext a:visited {
-  color: var(--hn-link);
-  text-decoration: underline;
-  text-decoration-color: rgba(138, 180, 255, 0.4);
-  text-underline-offset: 2px;
-}
-
-html[data-hn-theme="dark"] .comment a:hover,
-html[data-hn-theme="dark"] .commtext a:hover {
-  color: #a9c8ff;
-  text-decoration-color: currentColor;
-}
-
-html[data-hn-theme="dark"] .comhead,
-html[data-hn-theme="dark"] .comhead a:link,
-html[data-hn-theme="dark"] .comhead a:visited,
-html[data-hn-theme="dark"] .navs,
-html[data-hn-theme="dark"] .navs a:link,
-html[data-hn-theme="dark"] .navs a:visited,
-html[data-hn-theme="dark"] .onstory,
-html[data-hn-theme="dark"] .onstory a:link,
-html[data-hn-theme="dark"] .onstory a:visited {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] .comhead a:hover,
-html[data-hn-theme="dark"] .navs a:hover,
-html[data-hn-theme="dark"] .onstory a:hover {
-  color: var(--hn-text-2);
-}
-
-/* `a.togg` rather than `.togg` so this outranks the `.navs a` rules above. */
-html[data-hn-theme="dark"] a.togg:link,
-html[data-hn-theme="dark"] a.togg:visited {
-  color: var(--hn-text-2);
-  font-weight: 600;
-}
-
-html[data-hn-theme="dark"] a.togg:hover {
-  color: var(--hn-accent);
-}
-
-html[data-hn-theme="dark"] .reply,
-html[data-hn-theme="dark"] .reply a:link,
-html[data-hn-theme="dark"] .reply a:visited {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] .reply a:hover {
-  color: var(--hn-accent);
-}
-
-/* Vertical guide on the indent column so deep threads stay readable. */
-html[data-hn-theme="dark"] .comment-tree td.ind[indent]:not([indent="0"]) {
-  box-shadow: inset -1px 0 0 0 var(--hn-border-soft);
-}
-
-/* Downweighted / flagged comments: HN's c00…cdd ramp goes dark-to-light for
-   a white page. Re-map it light-to-dark so the ordering still reads. */
 html[data-hn-theme="dark"] .c00,
-html[data-hn-theme="dark"] .c00 a:link { color: #ccd2da; }
+html[data-hn-theme="dark"] .c00 a:link { color: #e0e0e0; }
 html[data-hn-theme="dark"] .c5a,
 html[data-hn-theme="dark"] .c5a a:link,
-html[data-hn-theme="dark"] .c5a a:visited { color: #a7aeb8; }
+html[data-hn-theme="dark"] .c5a a:visited { color: #a0a0a0; }
 html[data-hn-theme="dark"] .c73,
 html[data-hn-theme="dark"] .c73 a:link,
-html[data-hn-theme="dark"] .c73 a:visited { color: #949ba5; }
+html[data-hn-theme="dark"] .c73 a:visited { color: #8a8a8a; }
 html[data-hn-theme="dark"] .c82,
 html[data-hn-theme="dark"] .c82 a:link,
-html[data-hn-theme="dark"] .c82 a:visited { color: #878e98; }
+html[data-hn-theme="dark"] .c82 a:visited { color: #7c7c7c; }
 html[data-hn-theme="dark"] .c88,
 html[data-hn-theme="dark"] .c88 a:link,
-html[data-hn-theme="dark"] .c88 a:visited { color: #7f858f; }
+html[data-hn-theme="dark"] .c88 a:visited { color: #757575; }
 html[data-hn-theme="dark"] .c9c,
 html[data-hn-theme="dark"] .c9c a:link,
-html[data-hn-theme="dark"] .c9c a:visited { color: #737a83; }
+html[data-hn-theme="dark"] .c9c a:visited { color: #626262; }
 html[data-hn-theme="dark"] .cae,
 html[data-hn-theme="dark"] .cae a:link,
-html[data-hn-theme="dark"] .cae a:visited { color: #686e77; }
+html[data-hn-theme="dark"] .cae a:visited { color: #515151; }
 html[data-hn-theme="dark"] .cbe,
 html[data-hn-theme="dark"] .cbe a:link,
-html[data-hn-theme="dark"] .cbe a:visited { color: #5e646c; }
+html[data-hn-theme="dark"] .cbe a:visited { color: #424242; }
 html[data-hn-theme="dark"] .cce,
 html[data-hn-theme="dark"] .cce a:link,
-html[data-hn-theme="dark"] .cce a:visited { color: #555b62; }
+html[data-hn-theme="dark"] .cce a:visited { color: #333333; }
 html[data-hn-theme="dark"] .cdd,
 html[data-hn-theme="dark"] .cdd a:link,
-html[data-hn-theme="dark"] .cdd a:visited { color: #4c5158; }
+html[data-hn-theme="dark"] .cdd a:visited { color: #262626; }
 
 /* --------------------------------------------------------------------------
-   10. Code and quoted text
+   7. Forms
+
+   color-scheme: dark above already hands the browser dark form controls,
+   so submit buttons, checkboxes, radios and scrollbars are left native —
+   which is what they are on HN. Text fields get the page's own field color
+   rather than the UA's, and read-only fields keep HN's "this is the page
+   background, not an input" signal.
    -------------------------------------------------------------------------- */
 
-html[data-hn-theme="dark"] .commtext pre,
-html[data-hn-theme="dark"] .toptext pre {
-  background-color: var(--hn-field);
-  border: 1px solid var(--hn-border-soft);
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin: 0.9em 0 0.2em;
-  color: #dbe0e7;
-}
-
-html[data-hn-theme="dark"] .commtext code,
-html[data-hn-theme="dark"] .toptext code {
-  color: #dbe0e7;
-  font-size: 0.94em;
-}
-
-html[data-hn-theme="dark"] .toptext {
-  color: var(--hn-comment);
-}
-
-/* --------------------------------------------------------------------------
-   11. Forms
-   -------------------------------------------------------------------------- */
-
-html[data-hn-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+html[data-hn-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([readonly]),
 html[data-hn-theme="dark"] textarea,
 html[data-hn-theme="dark"] select {
   background-color: var(--hn-field);
-  color: var(--hn-text);
-  border: 1px solid var(--hn-border);
-  border-radius: 6px;
-  padding: 5px 8px;
-  outline: none;
+  color: var(--hn-fg);
 }
 
-html[data-hn-theme="dark"] textarea {
-  line-height: 1.5;
-  padding: 8px 10px;
-}
-
-html[data-hn-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):focus,
-html[data-hn-theme="dark"] textarea:focus,
-html[data-hn-theme="dark"] select:focus {
-  border-color: rgba(255, 122, 41, 0.7);
-  box-shadow: 0 0 0 3px rgba(255, 122, 41, 0.14);
-}
-
-html[data-hn-theme="dark"] ::placeholder {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] input[type="submit"],
-html[data-hn-theme="dark"] button {
-  background-color: var(--hn-accent);
-  color: #1a0f05;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-html[data-hn-theme="dark"] input[type="submit"]:hover,
-html[data-hn-theme="dark"] button:hover {
-  background-color: var(--hn-accent-hi);
-}
-
-html[data-hn-theme="dark"] input[type="submit"]:active,
-html[data-hn-theme="dark"] button:active {
-  background-color: #e96a1c;
-}
-
-html[data-hn-theme="dark"] input[type="checkbox"],
-html[data-hn-theme="dark"] input[type="radio"] {
-  accent-color: var(--hn-accent);
+/* news.css: input[readonly] { color:#828282; background:#f6f6ef; border:none } */
+html[data-hn-theme="dark"] input[readonly] {
+  background-color: var(--hn-surface);
+  color: var(--hn-fg-dim);
 }
 
 /* --------------------------------------------------------------------------
-   12. Footer
+   8. The yc.css doc pages
+
+   Guidelines, FAQ, Security, Welcome and Bookmarklet are a different
+   template: no #hnmain, no news.css, a #fafaf0 panel on a #ffffff body, and
+   no author color on the body text at all. The panel is the handle —
+   nothing else on HN carries bgcolor="#fafaf0" — and once it is dark the
+   paragraph text is already light, because color-scheme: dark moves the UA
+   default that yc.css leaves in place. That only leaves yc.css's own #333
+   bold, which would otherwise sit invisibly on the new panel.
+
+   (formatdoc and lists look like these pages but are served with news.css,
+   so they are covered by everything above.)
    -------------------------------------------------------------------------- */
 
-/* The rule above the footer links is a 2px empty bgcolor cell. Matching on
-   :empty rather than on #ff6600 keeps it working for accounts that set a
-   custom `topcolor` in their profile — HN paints this cell in that color too. */
-html[data-hn-theme="dark"] #hnmain td[bgcolor]:empty {
-  background-color: rgba(255, 122, 41, 0.38);
+html[data-hn-theme="dark"] td[bgcolor="#fafaf0" i] {
+  background-color: var(--hn-surface);
 }
 
-html[data-hn-theme="dark"] .yclinks,
-html[data-hn-theme="dark"] .yclinks a:link,
-html[data-hn-theme="dark"] .yclinks a:visited {
-  color: var(--hn-text-3);
-}
-
-html[data-hn-theme="dark"] .yclinks a:hover {
-  color: var(--hn-text-2);
+html[data-hn-theme="dark"] td[bgcolor="#fafaf0" i] b {
+  color: var(--hn-fg);
 }
 
 /* --------------------------------------------------------------------------
-   13. Full-bleed on narrow screens
-   -------------------------------------------------------------------------- */
+   9. Toggle animation
 
-@media (max-width: 750px) {
-  html[data-hn-theme="dark"] body {
-    padding: 0;
-  }
-
-  html[data-hn-theme="dark"] #hnmain {
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  html[data-hn-theme="dark"] #hnmain > tbody > tr:first-child > td {
-    border-radius: 0;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   14. Toggle animation
-   content.js adds .hn-anim on click only, so first paint is never animated.
+   The only non-color rule in the file, and it never applies on load:
+   content.js adds .hn-anim on click, so the flip between themes is a color
+   crossfade instead of a jump cut. Nothing moves — only color, background
+   and border are transitioned.
    -------------------------------------------------------------------------- */
 
 html.hn-anim body,

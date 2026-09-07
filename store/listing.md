@@ -1,30 +1,43 @@
 # Chrome Web Store listing
 
-Everything the developer console asks for on a first submission, written out to
-be pasted. Field names match the console's own labels.
+Every field the developer console asks for, in the order the console asks for
+it, written to be pasted. Character counts are against the console's own limits.
+
+**Item ID:** `gkmchehifmhmmnmlpkmafggdnmaobhgn`
+**Listing:** https://chromewebstore.google.com/detail/gkmchehifmhmmnmlpkmafggdnmaobhgn
+**Console:** https://chrome.google.com/webstore/devconsole
 
 ---
 
-## Store listing
+# Package
 
-**Item name** (45 char limit)
+Upload `dist/hn-dark-<version>.zip` from `./scripts/build-zip.sh`.
+
+The **store icon is not a separate upload** — it is the 128×128 icon inside the
+ZIP. It is 96×96 of artwork centred in a 128×128 canvas with 16px of
+transparent padding on every side, which is what Google specifies.
+
+---
+
+# Store listing
+
+**Item name** — 45 char limit
 
 ```
 Hacker News Dark
 ```
 
-> See "Known review risks" in [`../docs/chrome-web-store-release.md`](../docs/chrome-web-store-release.md):
-> if a reviewer objects to leading with the product name, `Dark Mode for Hacker News`
-> is the shape that reliably passes.
+> If a reviewer objects to a name that leads with someone else's product name,
+> `Dark Mode for Hacker News` is the shape that reliably passes. See "Known
+> review risks" in [`../docs/chrome-web-store-release.md`](../docs/chrome-web-store-release.md).
 
-**Summary** (132 char limit — this is the manifest `description`, and the
-console prefills it)
+**Summary** — 132 char limit. Prefilled from the manifest `description`.
 
 ```
 Dark mode for Hacker News. Only the colors change — same layout, same Verdana. Follows your system appearance.
 ```
 
-**Description**
+**Description** — 16,000 char limit
 
 ```
 A dark theme for news.ycombinator.com that changes the colors and nothing else.
@@ -85,25 +98,13 @@ Not affiliated with, endorsed by, or associated with Hacker News or
 Y Combinator.
 ```
 
-**Category**
+**Category:** `Functionality & UI`
+**Language:** `English`
 
-```
-Functionality & UI
-```
+**Graphic assets**
 
-**Language**
-
-```
-English
-```
-
----
-
-## Graphic assets
-
-| Asset | File | Size |
+| Field | File | Size |
 | --- | --- | --- |
-| Store icon | `../icons/icon128.png` | 128×128 |
 | Screenshot 1 | `screenshots/1-front-page.png` | 1280×800 |
 | Screenshot 2 | `screenshots/2-comments.png` | 1280×800 |
 | Screenshot 3 | `screenshots/3-same-layout.png` | 1280×800 |
@@ -112,40 +113,47 @@ English
 
 ---
 
-## Privacy practices
+# Privacy
 
-**Single purpose description**
-
-```
-Hacker News Dark restyles news.ycombinator.com in dark colors. That is its only
-function: it applies a stylesheet to one site, and adds a link to that site's
-header for switching between matching and inverting the system appearance.
-```
-
-**Permission justification — `storage`**
+## Single purpose description — 1,000 char limit (used: 250)
 
 ```
-The extension stores one boolean: whether the theme should match the system
-appearance or be the opposite of it. It is written when the user clicks the
-"theme" link in the header and read on page load to decide which way to paint
-the page. chrome.storage.sync is used so the choice follows the user's Chrome
-profile across their own devices and updates other open tabs. Nothing else is
-stored, and the value never leaves the user's browser.
+Hacker News Dark restyles news.ycombinator.com in dark colors. That is its only function. It applies a stylesheet to that one site, and adds a link to that site's header so the reader can switch between matching and inverting their system appearance.
 ```
 
-**Permission justification — host permission `*://news.ycombinator.com/*`**
+## Permission justification
+
+### `storage` justification — 1,000 char limit (used: 516)
 
 ```
-This is the site being themed. The content script injects the stylesheet and
-sets one attribute on the <html> element so the stylesheet can take effect, and
-inserts the "theme" link into the site's own header. It runs on this host only,
-makes no network requests, and does not read the content of the page.
+The extension stores one boolean: whether the theme should match the system appearance or be the opposite of it. It is written when the user clicks the "theme" link in the header, and read on page load to decide which way to paint the page. chrome.storage.sync is used so that the choice follows the user's own Chrome profile across their devices and updates other open tabs. Nothing else is stored, the value never leaves the user's browser, and removing the extension removes it. No other data is read or retained.
 ```
 
-**Remote code** — No. Everything executed is in the package; there is no
-`eval`, no injected `<script src>`, and no remote configuration.
+### Host permission justification — 1,000 char limit (used: 668)
 
-**Data usage** — every box unchecked. The extension collects none of:
+```
+The single host is news.ycombinator.com, the site the extension themes. It is declared in content_scripts rather than as a broad host permission, so the extension cannot run anywhere else.
+
+On that host the content script does two things: it sets one attribute on the <html> element, which is the switch the bundled stylesheet is gated on, and it inserts a "theme" link into the page's existing header so the user can flip between matching and inverting their system appearance.
+
+It does not read the content of the page — not story titles, comments, usernames, or whether the user is signed in. It makes no network requests of any kind, and it sends nothing anywhere.
+```
+
+> The console warns that a host permission "may require an in-depth review which
+> will delay publishing." Expect that; a single named host with no data
+> collection is the easy case, but it is still a slower path than none.
+
+### Are you using remote code?
+
+**`No, I am not using Remote code`**
+
+Everything executed ships in the package: one CSS file and one JavaScript file.
+No `<script src>`, no modules pointing at external files, no `eval()`, no
+remote configuration.
+
+## Data usage
+
+**Leave every box unchecked.** The extension collects none of it:
 
 | Category | Collected |
 | --- | --- |
@@ -159,16 +167,16 @@ makes no network requests, and does not read the content of the page.
 | User activity | No |
 | Website content | No |
 
-**The three certifications** — all three can be checked truthfully:
+"Website content" is the one worth a second look, since a content script *could*
+read the page. This one does not — it sets an attribute and appends a link.
 
-- I do not sell or transfer user data to third parties, outside of the approved
-  use cases
-- I do not use or transfer user data for purposes that are unrelated to my
-  item's single purpose
-- I do not use or transfer user data to determine creditworthiness or for
-  lending purposes
+## Certifications — check all three
 
-**Privacy policy URL**
+- ☑ I do not sell or transfer user data to third parties, outside of the approved use cases
+- ☑ I do not use or transfer user data for purposes that are unrelated to my item's single purpose
+- ☑ I do not use or transfer user data to determine creditworthiness or for lending purposes
+
+## Privacy policy URL — 2,048 char limit
 
 ```
 https://github.com/grinich/hn-dark/blob/main/PRIVACY.md
@@ -176,8 +184,8 @@ https://github.com/grinich/hn-dark/blob/main/PRIVACY.md
 
 ---
 
-## Distribution
+# Distribution
 
-- **Visibility**: Public
-- **Distribution**: All regions
-- **Pricing**: Free
+- **Visibility:** Public
+- **Distribution:** All regions
+- **Pricing:** Free

@@ -1,5 +1,8 @@
 # Releasing to the Chrome Web Store
 
+**Item ID:** `gkmchehifmhmmnmlpkmafggdnmaobhgn`
+**Listing:** https://chromewebstore.google.com/detail/gkmchehifmhmmnmlpkmafggdnmaobhgn
+
 The first submission is manual. Every one after that is a tag.
 
 That split is not a choice — the Chrome Web Store API can upload a package and
@@ -9,7 +12,11 @@ developer console, and the console cannot be driven by a browser extension
 either: Chrome hardcodes `chromewebstore.google.com` as un-scriptable, so no
 automation reaches it. Do the first one by hand.
 
-## One time: create the listing
+## One time: create the listing — done
+
+The draft item exists, so this section is history; it is kept because the next
+extension will need it, and because a rejected review can send you back through
+it. Skip to [Every time after that](#every-time-after-that).
 
 1. **Pay the developer fee.** $5, once per Google account, at the
    [developer dashboard](https://chrome.google.com/webstore/devconsole). Use the
@@ -35,7 +42,9 @@ automation reaches it. Do the first one by hand.
 
 5. **Record the ID.** Once the item exists, its 32-character ID is in the
    listing URL: `https://chromewebstore.google.com/detail/<id>`. Keep it — the
-   next step needs it, and it never changes.
+   next step needs it, and it never changes. Here it is
+   `gkmchehifmhmmnmlpkmafggdnmaobhgn`, already set as the repository variable
+   `CWS_EXTENSION_ID`.
 
 ## One time: let CI publish
 

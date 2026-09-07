@@ -5,8 +5,8 @@ A dark theme for news.ycombinator.com that follows your system appearance, with 
 
 ## Install
 
-From the Chrome Web Store — *listing pending review; the link lands here once
-it is live.*
+[**From the Chrome Web Store**](https://chromewebstore.google.com/detail/gkmchehifmhmmnmlpkmafggdnmaobhgn)
+— *in review; the link goes live when it is approved.*
 
 Or run it from source:
 

@@ -6,7 +6,11 @@
 # callback on a local port, checks the resulting token can actually reach the
 # listing, and stores everything the release workflow needs on the repo.
 #
-#   ./scripts/setup-cws-secrets.sh
+#   ./scripts/setup-cws-secrets.sh [path/to/client_secret_*.json]
+#
+# With no argument it picks up the newest client_secret_*.json in ~/Downloads,
+# which is exactly what Google Cloud console gives you, and falls back to
+# prompting if there is none.
 #
 # Nothing is written to disk and nothing is passed on a command line, so the
 # values stay out of `ps`, your shell history, and any log. They live only in
@@ -47,11 +51,17 @@ gh repo view "$REPO" >/dev/null 2>&1 ||
 # --- 1. the listing ----------------------------------------------------------
 
 step "Step 1 of 4 — the store listing"
-note "The 32-character ID from the listing URL:"
-note "https://chromewebstore.google.com/detail/<this-part>"
 
+# The ID is already a repository variable once this has been run before, or
+# once it was set by hand — no reason to make anyone retype it.
 EXTENSION_ID="${EXTENSION_ID:-}"
 if [ -z "$EXTENSION_ID" ]; then
+  EXTENSION_ID=$(gh variable get CWS_EXTENSION_ID --repo "$REPO" 2>/dev/null || true)
+  [ -n "$EXTENSION_ID" ] && note "Using CWS_EXTENSION_ID from $REPO."
+fi
+if [ -z "$EXTENSION_ID" ]; then
+  note "The 32-character ID from the listing URL:"
+  note "https://chromewebstore.google.com/detail/<this-part>"
   printf '\n  Extension ID: '
   read -r EXTENSION_ID
 fi
@@ -64,15 +74,60 @@ esac
 # --- 2. client credentials ---------------------------------------------------
 
 step "Step 2 of 4 — OAuth client"
-note "Google Cloud console -> APIs & Services -> Credentials -> your Desktop client."
-printf '\n  Client ID: '
-read -r CLIENT_ID
-[ -n "$CLIENT_ID" ] || fail "Client ID cannot be empty."
 
-printf '  Client secret (hidden): '
-read -rs CLIENT_SECRET
-printf '\n'
-[ -n "$CLIENT_SECRET" ] || fail "Client secret cannot be empty."
+# Google Cloud console offers the client as a JSON download. Reading it beats
+# copying two values out of a web page by hand, and the secret never appears on
+# screen, in the shell history, or in `ps`.
+#
+#   ./scripts/setup-cws-secrets.sh ~/Downloads/client_secret_....json
+#
+# With no argument, the newest matching download is used.
+CLIENT_JSON="${1:-}"
+if [ -z "$CLIENT_JSON" ]; then
+  CLIENT_JSON=$(ls -t "$HOME"/Downloads/client_secret_*.json 2>/dev/null | head -1 || true)
+  [ -n "$CLIENT_JSON" ] && note "Found $(basename "$CLIENT_JSON") in ~/Downloads."
+fi
+
+if [ -n "$CLIENT_JSON" ]; then
+  [ -f "$CLIENT_JSON" ] || fail "No such file: $CLIENT_JSON"
+
+  # Both values come out on one line, tab-separated, and the secret goes
+  # straight into a variable — it is never printed.
+  CREDS=$(python3 - "$CLIENT_JSON" <<'PYEOF'
+import json, sys
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+# A Desktop-app client is keyed "installed"; "web" is the other shape, and it
+# is the wrong client type for this flow.
+block = data.get("installed") or data.get("web") or {}
+client_id = block.get("client_id", "")
+client_secret = block.get("client_secret", "")
+if not client_id or not client_secret:
+    sys.exit("no client_id/client_secret in that file")
+if "web" in data and "installed" not in data:
+    sys.exit("that is a Web application client; the flow needs a Desktop app client")
+print(client_id + "\t" + client_secret)
+PYEOF
+  ) || fail "Could not read the client from $CLIENT_JSON"
+
+  CLIENT_ID=${CREDS%%$'\t'*}
+  CLIENT_SECRET=${CREDS#*$'\t'}
+  unset CREDS
+  note "Client: $CLIENT_ID"
+else
+  note "Google Cloud console -> APIs & Services -> Credentials -> your Desktop client."
+  note "Tip: download the client as JSON and pass the path instead of typing these."
+  printf '\n  Client ID: '
+  read -r CLIENT_ID
+  [ -n "$CLIENT_ID" ] || fail "Client ID cannot be empty."
+
+  printf '  Client secret (hidden): '
+  read -rs CLIENT_SECRET
+  printf '\n'
+fi
+
+[ -n "${CLIENT_ID:-}" ] || fail "Client ID cannot be empty."
+[ -n "${CLIENT_SECRET:-}" ] || fail "Client secret cannot be empty."
 
 # --- 3. authorize ------------------------------------------------------------
 # The helper serves a loopback redirect and catches the code itself; Google

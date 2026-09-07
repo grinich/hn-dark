@@ -48,20 +48,47 @@ it. Skip to [Every time after that](#every-time-after-that).
 
 ## One time: let CI publish
 
+This part cannot be automated for you. It needs a browser signed in as the
+Google account that owns the listing, and the consent redirect lands on a
+loopback port on *this* machine — so a remote or agent-driven browser cannot
+complete it even in principle. Three steps, one of them a click.
+
+**1. Make a Desktop-app OAuth client.** Reuse the existing
+[`xchat-releases`](https://console.cloud.google.com/) project — it already has
+the **Chrome Web Store API** enabled and its consent screen set to *In
+production*, which are the two slow parts. *Credentials → Create credentials →
+OAuth client ID → Desktop app*, named `hn-dark-ci`.
+
+A client of its own, rather than reusing `inflow-ci`, for the reason inflow's
+own runbook gives for keeping `inflow-ci` separate from `xchat-ci`: revoking
+one extension's access should not break the other's releases.
+
+Then **Download JSON** on the client you just made.
+
+**2. Run the script**, pointing it at that file:
+
 ```sh
-./scripts/setup-cws-secrets.sh
+./scripts/setup-cws-secrets.sh ~/Downloads/client_secret_*.json
 ```
 
-It asks for the extension ID and a Google OAuth client, opens the consent
-screen, catches the callback on a loopback port, verifies the token can
-actually reach *your* listing, and writes three secrets plus one variable to
-the repo. Nothing touches disk or argv.
+With no argument it picks up the newest `client_secret_*.json` in `~/Downloads`
+anyway, and falls back to prompting if there is none. Reading the file beats
+copying two values out of a web page: the secret never appears on screen, in
+shell history, or in `ps`. The extension ID comes from the `CWS_EXTENSION_ID`
+repository variable, so there is nothing to paste.
 
-The OAuth client is a **Desktop app** client in a Google Cloud project with the
-**Chrome Web Store API** enabled, created under the same Google account that
-owns the listing. If the consent screen is left in *Testing* the refresh token
-expires every seven days; move it to *In production* and it lasts until you
-revoke it at [myaccount.google.com/permissions](https://myaccount.google.com/permissions).
+**3. Click Allow**, signed in as the account that owns the listing.
+
+The script then verifies the token can actually reach *this* item before it
+stores anything, and writes `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET` and
+`CWS_REFRESH_TOKEN` to the repo.
+
+Two things worth knowing. A refresh token is scoped to a (client, user, scopes)
+triple rather than to an item, so the account's other listings are reachable
+with the same token — minting this one does not disturb inflow's. And if the
+consent screen is ever left in *Testing*, the token expires every seven days;
+*In production* means it lasts until revoked at
+[myaccount.google.com/permissions](https://myaccount.google.com/permissions).
 
 ## Every time after that
 

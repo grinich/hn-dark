@@ -46,12 +46,22 @@ it. Skip to [Every time after that](#every-time-after-that).
    `gkmchehifmhmmnmlpkmafggdnmaobhgn`, already set as the repository variable
    `CWS_EXTENSION_ID`.
 
-## One time: let CI publish
+## One time: let CI publish — done
 
-This part cannot be automated for you. It needs a browser signed in as the
+Configured on 2026-09-07. The client is `hn-dark-ci`, a Desktop-app OAuth
+client in the `xchat-releases` project, authorized by the Google account that
+owns the listing — verified against the live API before anything was stored.
+`CWS_CLIENT_ID`, `CWS_CLIENT_SECRET` and `CWS_REFRESH_TOKEN` are set on the
+repo, alongside the `CWS_EXTENSION_ID` variable. Releases publish themselves;
+what follows is kept for when the token is revoked or the next extension needs
+the same treatment.
+
+This part cannot be automated headlessly. It needs a browser signed in as the
 Google account that owns the listing, and the consent redirect lands on a
-loopback port on *this* machine — so a remote or agent-driven browser cannot
-complete it even in principle. Three steps, one of them a click.
+loopback port on *this* machine — so a cloud or remote browser cannot complete
+it even in principle. A local browser can: this was done end to end through
+Claude in Chrome, which drives the real browser on this machine, so both
+conditions hold. Three steps, one of them a click.
 
 **1. Make a Desktop-app OAuth client.** Reuse the existing
 [`xchat-releases`](https://console.cloud.google.com/) project — it already has

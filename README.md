@@ -5,15 +5,29 @@ A dark theme for news.ycombinator.com that follows your system appearance, with 
 
 ## Install
 
-[**From the Chrome Web Store**](https://chromewebstore.google.com/detail/gkmchehifmhmmnmlpkmafggdnmaobhgn)
-— *in review; the link goes live when it is approved.*
+[**Add to Chrome from the Chrome Web Store**](https://chromewebstore.google.com/detail/hacker-news-dark/gkmchehifmhmmnmlpkmafggdnmaobhgn)
 
-Or run it from source:
+Then open [news.ycombinator.com](https://news.ycombinator.com). It is dark if
+your system is; the `theme` link in the top bar flips it. Nothing to configure,
+and no reload needed — the theme applies before the page first paints.
 
-1. Open `chrome://extensions`
-2. Turn on **Developer mode** (top right)
-3. Click **Load unpacked** and select this folder
-4. Open [news.ycombinator.com](https://news.ycombinator.com)
+The same listing installs on any Chromium browser that uses the Chrome Web
+Store — Edge, Brave, Arc, Vivaldi, Opera. New versions arrive through Chrome's
+own update check.
+
+Or run it from source, which is also how you develop it:
+
+1. Clone or download this repository
+2. Open `chrome://extensions`
+3. Turn on **Developer mode** (top right)
+4. Click **Load unpacked** and select the repository folder
+5. Open [news.ycombinator.com](https://news.ycombinator.com)
+
+Don't leave an unpacked copy enabled alongside the store one. The page survives
+it — the `theme` link is inserted behind an id guard, so only one appears — but
+each copy keeps its own `chrome.storage.sync`, and on load the one you last
+clicked gets overruled by the one you didn't, which looks like the setting
+resetting itself. Disable whichever you aren't using.
 
 ## The two settings
 
@@ -107,8 +121,8 @@ git push --follow-tags
 
 The tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
 which packages the extension, cuts a GitHub Release, and publishes the same zip
-to the Chrome Web Store. The first submission has to be made by hand — see
-[`docs/chrome-web-store-release.md`](docs/chrome-web-store-release.md).
+to the Chrome Web Store. The listing itself was created and reviewed by hand,
+once — see [`docs/chrome-web-store-release.md`](docs/chrome-web-store-release.md).
 
 ## Privacy
 

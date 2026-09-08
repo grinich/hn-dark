@@ -1,7 +1,8 @@
 # Releasing to the Chrome Web Store
 
 **Item ID:** `gkmchehifmhmmnmlpkmafggdnmaobhgn`
-**Listing:** https://chromewebstore.google.com/detail/gkmchehifmhmmnmlpkmafggdnmaobhgn
+**Listing:** https://chromewebstore.google.com/detail/hacker-news-dark/gkmchehifmhmmnmlpkmafggdnmaobhgn
+**Status:** published, 0.0.1, approved on 2026-09-07.
 
 The first submission is manual. Every one after that is a tag.
 
@@ -132,7 +133,9 @@ Two deliberate behaviours in that workflow:
 
 ## Known review risks
 
-Worth knowing before the first submission, in rough order of likelihood:
+None of these bit: 0.0.1 was approved as submitted, under this name and this
+icon. Kept because a later version can still be rejected, and because the next
+extension starts here — in rough order of likelihood:
 
 - **The name.** "Hacker News Dark" leads with someone else's product name.
   Chrome Web Store policy allows referring to a product you're compatible with
